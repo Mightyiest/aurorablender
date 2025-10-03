@@ -213,14 +213,18 @@ class AURORA_OT_Create(bpy.types.Operator):
         curve_object = context.active_object
 
         # --- Pre-Creation Cleanup ---
+        # Decoupled cleanup to prevent orphaned data if user deletes object manually
         if "aurora_object_name" in curve_object:
             old_aurora_name = curve_object["aurora_object_name"]
             old_aurora = bpy.data.objects.get(old_aurora_name)
             if old_aurora:
-                old_mesh = old_aurora.data
                 bpy.data.objects.remove(old_aurora, do_unlink=True)
-                if old_mesh and old_mesh.users == 0:
-                    bpy.data.meshes.remove(old_mesh)
+
+        if "aurora_mesh_name" in curve_object:
+            old_mesh_name = curve_object["aurora_mesh_name"]
+            old_mesh = bpy.data.meshes.get(old_mesh_name)
+            if old_mesh and old_mesh.users == 0:
+                bpy.data.meshes.remove(old_mesh)
 
         if "aurora_texture_name" in curve_object:
             old_tex_name = curve_object["aurora_texture_name"]
@@ -361,6 +365,7 @@ class AURORA_OT_Create(bpy.types.Operator):
         # --- 6. Assign material and finalize ---
         aurora_object.data.materials.append(mat)
         curve_object["aurora_object_name"] = aurora_object.name
+        curve_object["aurora_mesh_name"] = aurora_object.data.name # Store mesh name
         curve_object["aurora_texture_name"] = disp_texture.name
         
         curve_object.select_set(False)
